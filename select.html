@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>选择角色</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    font-family: Arial, sans-serif;
+    background: url('bkg.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  h1 {
+    color: white;
+    margin-bottom: 30px;
+  }
+  .role-container {
+    display: flex;
+    gap: 40px;
+  }
+  .role {
+    background: rgba(255,255,255,0.9);
+    border-radius: 15px;
+    padding: 15px;
+    width: 160px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    user-select: none;
+  }
+  .role:hover {
+    transform: scale(1.05);
+  }
+  .role img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+  }
+  .role-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+  <h1>请选择你想聊天的角色</h1>
+  <div class="role-container">
+    <div class="role" id="xiaosha">
+      <img src="photo.png" alt="小鲨头像" />
+      <div class="role-name">小鲨</div>
+    </div>
+    <div class="role" id="sharze">
+      <img src="sharze.png" alt="鲨泽头像" />
+      <div class="role-name">鲨泽</div>
+    </div>
+  </div>
+
+<script>
+  // 取URL参数apiKey
+  const urlParams = new URLSearchParams(window.location.search);
+  const apiKey = urlParams.get('apiKey') || '';
+
+  if (!apiKey) {
+    alert('没有找到 API Key，页面将跳转回输入页');
+    window.location.href = 'index.html';
+  }
+
+  document.getElementById('xiaosha').addEventListener('click', () => {
+    // 跳转到小鲨聊天页，携带apiKey
+    window.location.href = `xiaosha.html?apiKey=${encodeURIComponent(apiKey)}`;
+  });
+
+  document.getElementById('sharze').addEventListener('click', () => {
+    // 跳转到鲨泽聊天页，携带apiKey
+    window.location.href = `sharze.html?apiKey=${encodeURIComponent(apiKey)}`;
+  });
+</script>
+</body>
+</html>
