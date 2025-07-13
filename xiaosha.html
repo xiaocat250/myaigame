@@ -1,0 +1,276 @@
+<!DOCTYPE html><html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 聊天</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    font-family: Arial, sans-serif;
+    background: url('bkg.png') no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  #chatWindow {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.5);
+  }
+  .message {
+    display: flex;
+    margin-bottom: 10px;
+  }
+  .message.user {
+    justify-content: flex-end;
+  }
+  .message.user .text {
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 15px 15px 0 15px;
+    padding: 8px 12px;
+    max-width: 70%;
+    word-break: break-word;
+  }
+  .message.user .avatar {
+    width: 40px;
+    height: 40px;
+    margin-left: 8px;
+  }
+  .message.ai {
+    justify-content: flex-start;
+  }
+  .message.ai .avatar {
+    width: 40px;
+    height: 40px;
+    margin-right: 8px;
+  }
+  .message.ai .text {
+    background-color: #eee;
+    color: #333;
+    border-radius: 15px 15px 15px 0;
+    padding: 8px 12px;
+    max-width: 70%;
+    word-break: break-word;
+  }
+  #inputArea {
+    display: flex;
+    padding: 10px;
+    background-color: rgba(0,0,0,0.7);
+  }
+  #userInput {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 20px;
+    border: none;
+  }
+  #sendBtn {
+    margin-left: 10px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 20px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+  #sendBtn:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+  }
+  #clearBtn {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 999;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 5px;
+    background-color: crimson;
+    color: white;
+    cursor: pointer;
+  }
+  #loveImg {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 60px;
+    display: none;
+    z-index: 999;
+  }
+  #progressContainer {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255,255,255,0.7);
+    padding: 5px;
+    border-radius: 5px;
+    z-index: 999;
+    width: 150px;
+  }
+  #progressBar {
+    height: 10px;
+    background-color: pink;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+  <button id="clearBtn">让小鲨忘记你⚠️</button>
+  <div id="progressContainer">
+    好感度：<div id="progressBar"></div>
+  </div>
+  <img id="loveImg" src="love.png" alt="爱心" />
+  <div id="chatWindow"></div>
+  <div id="inputArea">
+    <input id="userInput" type="text" placeholder="请输入问题..." />
+    <button id="sendBtn" disabled>发送</button>
+  </div>
+<script>
+const apiKey = new URLSearchParams(location.search).get('apiKey') || '';
+if (!apiKey) {
+  alert('没有找到 API Key');
+  location.href = 'index.html';
+}
+const chatWindow = document.getElementById('chatWindow');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const progressBar = document.getElementById('progressBar');
+const loveImg = document.getElementById('loveImg');
+let affection = parseInt(localStorage.getItem('affection')) || 0;
+let contextMessages = [
+  { role: 'system', content: '你是一只可爱的小鲨鱼，说话讨人喜欢。当你觉得开心时输出[happy]，生气时输出[unhappy]，如果有人惹你，你就清空聊天，输出[delete]。' }
+];
+function updateProgress() {
+  progressBar.style.width = Math.min(affection, 100) + '%';
+  progressBar.style.backgroundColor = affection > 80 ? 'hotpink' : 'pink';
+  localStorage.setItem('affection', affection);
+}
+updateProgress();
+userInput.addEventListener('input', () => {
+  sendBtn.disabled = userInput.value.trim().length === 0;
+});
+function saveChatHistory() {
+  localStorage.setItem('chatHistory', chatWindow.innerHTML);
+  localStorage.setItem('context', JSON.stringify(contextMessages));
+}
+function loadChatHistory() {
+  chatWindow.innerHTML = localStorage.getItem('chatHistory') || '';
+  const context = localStorage.getItem('context');
+  if (context) contextMessages = JSON.parse(context);
+}
+function appendMessage(sender, text) {
+  const div = document.createElement('div');
+  div.classList.add('message', sender);
+  const avatar = document.createElement('img');
+  avatar.className = 'avatar';
+  avatar.src = sender === 'user' ? 'player.jpg' : 'photo.png';
+  avatar.alt = sender === 'user' ? '你' : 'AI头像';
+  const msg = document.createElement('div');
+  msg.className = 'text';
+  msg.textContent = text;
+  if (sender === 'ai') {
+    div.appendChild(avatar);
+    div.appendChild(msg);
+  } else {
+    div.appendChild(msg);
+    div.appendChild(avatar);
+  }
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  saveChatHistory();
+}
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (confirm('确定要清除所有数据吗？')) {
+    localStorage.clear();
+    location.reload();
+  }
+});
+sendBtn.addEventListener('click', async () => {
+  const question = userInput.value.trim();
+  if (!question) return;
+  appendMessage('user', question);
+  const affectionNote = `当前好感度为 ${affection}%`;
+  contextMessages.push({ role: 'user', content: `${question}（${affectionNote}）` });
+  userInput.value = '';
+  sendBtn.disabled = true;
+  appendMessage('ai', '');
+  const currentMsgDiv = chatWindow.querySelectorAll('.message.ai .text');
+  const msgBox = currentMsgDiv[currentMsgDiv.length - 1];
+  try {
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: contextMessages,
+        max_tokens: 1024,
+        temperature: 0.7,
+        stream: true
+      })
+    });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let fullText = '', done = false;
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      if (value) {
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.startsWith('data:'));
+        for (let line of lines) {
+          line = line.replace('data: ', '').trim();
+          if (line === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(line);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullText += delta;
+              msgBox.textContent = fullText.replace('[happy]', '').replace('[unhappy]', '').replace('[delete]', '').trim();
+              chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    if (fullText.includes('[delete]')) {
+      setTimeout(() => {
+        localStorage.clear();
+        contextMessages = [contextMessages[0]];
+        chatWindow.innerHTML = '';
+        affection = 0;
+        updateProgress();
+        alert('糟糕，小鲨把聊天记录删掉了！');
+      }, 300);
+    }
+    if (fullText.includes('[happy]')) {
+      affection = Math.min(100, affection + 2);
+      updateProgress();
+      loveImg.style.display = 'block';
+      setTimeout(() => loveImg.style.display = 'none', 1500);
+    }
+    if (fullText.includes('[unhappy]')) {
+      affection = Math.max(0, affection - 1);
+      updateProgress();
+    }
+    contextMessages.push({ role: 'assistant', content: fullText });
+    saveChatHistory();
+  } catch (e) {
+    msgBox.textContent = '小鲨出错了！（检查网络）';
+    console.error(e);
+  }
+});
+window.onload = () => {
+  loadChatHistory();
+  updateProgress();
+};
+</script>
+</body>
+</html>
