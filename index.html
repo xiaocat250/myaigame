@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>输入 API Key</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #222;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input {
+      width: 300px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 150px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h1>请输入 API Key</h1>
+  <input type="text" id="apiKeyInput" placeholder="请输入你的 API Key" autocomplete="off" />
+  <button id="confirmBtn" disabled>确认</button>
+
+  <script>
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    // 
+    apiKeyInput.addEventListener('input', () => {
+      confirmBtn.disabled = apiKeyInput.value.trim() === '';
+    });
+
+    // 
+    confirmBtn.addEventListener('click', () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (apiKey) {
+        // 
+        localStorage.setItem('apiKey', apiKey);
+        // 
+        window.location.href = `select.html?apiKey=${encodeURIComponent(apiKey)}`;
+      }
+    });
+
+    //
+    window.addEventListener('load', () => {
+      const savedKey = localStorage.getItem('apiKey');
+      if (savedKey) {
+        apiKeyInput.value = savedKey;
+        confirmBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
